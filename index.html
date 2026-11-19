@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ลอยกระทงออนไลน์ - วาซาบิญี่ปุ่นแท้ by Lanna Products</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Prompt & Charm สำหรับภาษาไทยและกลิ่นอายล้านนา -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Charm:wght@700&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Firebase SDK (Compat) สำหรับเชื่อมต่อฐานข้อมูลออนไลน์แบบเรียลไทม์ -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
+    <style>
+        /* ธีมสีเอกลักษณ์ Lanna Products: เขียววาซาบิ เหลืองมะนาว และทองล้านนา */
+        :root {
+            --wasabi-dark: #1B5E20;
+            --wasabi-main: #2E7D32;
+            --wasabi-lime: #C6FF00;
+            --lanna-gold: #FFD54F;
+        }
+
+        body {
+            font-family: 'Prompt', sans-serif;
+            background-color: #061019;
+            color: #f8fafc;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .font-lanna {
+            font-family: 'Charm', cursive;
+        }
+
+        /* ฉากหลังท้องฟ้ายามค่ำคืนเมืองเชียงใหม่/ล้านนา */
+        .night-sky-bg {
+            background: radial-gradient(circle at 46% 28%, #1d3c4e 0%, #0e2233 48%, #06111c 100%);
+        }
+
+        /* พระจันทร์เต็มดวงยี่เป็ง */
+        .full-moon {
+            background: radial-gradient(circle, #fffde7 0%, #fff59d 45%, #ffd54f 80%, rgba(255, 213, 79, 0) 100%);
+            box-shadow: 0 0 70px 25px rgba(255, 245, 157, 0.4), 0 0 130px 55px rgba(255, 213, 79, 0.18);
+            animation: moonGlow 6s ease-in-out infinite alternate;
+        }
+
+        @keyframes moonGlow {
+            0% { transform: scale(1); opacity: 0.92; }
+            100% { transform: scale(1.05); opacity: 1; }
+        }
+
+        /* ดาวระยิบระยับบนท้องฟ้า */
+        .star {
+            position: absolute;
+            background-color: #ffffff;
+            border-radius: 50%;
+            animation: twinkle var(--dur, 3s) ease-in-out infinite alternate;
+            animation-delay: var(--delay, 0s);
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0.2; transform: scale(0.8); }
+            100% { opacity: 0.95; transform: scale(1.25); }
+        }
+
+        /* โคมลอยยี่เป็งลอยขึ้นสู่ท้องฟ้า */
+        .yi-peng-lantern {
+            position: absolute;
+            animation: floatLantern var(--float-dur, 24s) linear infinite;
+            animation-delay: var(--float-delay, 0s);
+            pointer-events: none;
+        }
+
+        @keyframes floatLantern {
+            0% {
+                transform: translateY(15vh) translateX(0px) scale(0.75);
+                opacity: 0;
+            }
+            15% { opacity: 0.92; }
+            50% { transform: translateY(-22vh) translateX(22px) scale(0.92); }
+            85% { opacity: 0.85; }
+            100% {
+                transform: translateY(-60vh) translateX(-16px) scale(1.06);
+                opacity: 0;
+            }
+        }
+
+        /* ผืนน้ำแม่น้ำปิงยามค่ำคืน */
+        .river-surface {
+            background: linear-gradient(180deg, #102b44 0%, #0b2239 42%, #061424 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* เงาพระจันทร์สะท้อนผิวน้ำ */
+        .river-moon-reflection {
+            background: radial-gradient(ellipse at center, rgba(255, 245, 157, 0.26) 0%, rgba(255, 213, 79, 0.09) 55%, transparent 78%);
+            animation: waterShimmer 4s ease-in-out infinite alternate;
+        }
+
+        @keyframes waterShimmer {
+            0% { transform: scaleX(0.95); opacity: 0.75; }
+            100% { transform: scaleX(1.08); opacity: 1; }
+        }
+
+        /* ระลอกคลื่นน้ำ */
+        .water-ripple {
+            position: absolute;
+            left: -50%;
+            width: 200%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(198, 255, 0, 0.16), rgba(255, 213, 79, 0.2), transparent);
+            animation: rippleMove var(--speed, 11s) linear infinite;
+        }
+
+        @keyframes rippleMove {
+            0% { transform: translateX(-12%); }
+            100% { transform: translateX(12%); }
+        }
+
+        /* กระทงลอยในน้ำ */
+        .krathong-item {
+            position: absolute;
+            cursor: pointer;
+            transition: transform 0.25s ease;
+            will-change: left, transform;
+        }
+
+        .krathong-item:hover {
+            z-index: 45 !important;
+            transform: scale(1.14);
+        }
+
+        .krathong-bob {
+            animation: krathongBobbing 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes krathongBobbing {
+            0% { transform: translateY(0px) rotate(-2.5deg); }
+            50% { transform: translateY(-5px) rotate(1.5deg); }
+            100% { transform: translateY(2px) rotate(-1deg); }
+        }
+
+        /* เปลวเทียนกระพริบ */
+        .flame-flicker {
+            transform-origin: center bottom;
+            animation: flicker 0.85s ease-in-out infinite alternate;
+        }
+
+        @keyframes flicker {
+            0% { transform: scale(1) rotate(-2deg); opacity: 0.9; }
+            50% { transform: scale(1.1, 0.95) rotate(2deg); opacity: 1; }
+            100% { transform: scale(0.95, 1.06) rotate(-1deg); opacity: 0.85; }
+        }
+
+        /* มาสคอตน้องวาซาบิล้านนาขยับทักทาย */
+        .mascot-float {
+            animation: mascotWelcome 3.5s ease-in-out infinite alternate;
+            transform-origin: bottom center;
+        }
+
+        @keyframes mascotWelcome {
+            0% { transform: translateY(0px) rotate(-1.5deg); }
+            100% { transform: translateY(-6px) rotate(1.5deg); }
+        }
+
+        /* ปุ่มสีเขียววาซาบิผสานขอบเหลืองมะนาว */
+        .btn-wasabi-gold {
+            background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 60%, #144517 100%);
+            border: 2px solid #C6FF00;
+            box-shadow: 0 4px 20px rgba(46, 125, 50, 0.5);
+            transition: all 0.25s ease;
+        }
+        .btn-wasabi-gold:hover {
+            background: linear-gradient(135deg, #388E3C 0%, #2E7D32 60%, #1B5E20 100%);
+            box-shadow: 0 6px 26px rgba(198, 255, 0, 0.48);
+            transform: translateY(-1px);
+        }
+        .btn-wasabi-gold:active {
+            transform: translateY(1px);
+        }
+
+        /* Custom Scrollbar */
+        .custom-scroll::-webkit-scrollbar {
+            width: 5px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: rgba(254, 243, 199, 0.4);
+            border-radius: 10px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #2E7D32;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between bg-[#061019]">
+
+    <!-- ไฟล์เสียงเพลงรำวงลอยกระทง (วางไฟล์ชื่อ song.mp3 ในโฟลเดอร์เดียวกับ index.html) -->
+    <audio id="bgMusic" src="song.mp3" loop preload="auto"></audio>
+
+    <!-- =====================================================================
+         1. หน้าต่างต้อนรับ (Welcome Overlay Modal)
+    ====================================================================== -->
+    <div id="welcomeOverlay" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md transition-opacity duration-500">
+        <div class="relative w-full max-w-md rounded-3xl border-2 border-[#FFD54F] night-sky-bg p-6 sm:p-8 text-center shadow-[0_0_50px_rgba(255,213,79,0.25)] overflow-hidden">
+            
+            <!-- แสงจันทร์ตกแต่งพื้นหลัง -->
+            <div class="absolute -top-14 left-1/2 -translate-x-1/2 w-40 h-40 rounded-full full-moon opacity-45 pointer-events-none"></div>
+
+            <div class="relative z-10 flex flex-col items-center">
+                <!-- โลโก้บริษัท Lanna Products (logo-loading.jpg) -->
+                <div class="bg-white rounded-2xl p-3 shadow-xl border-2 border-[#C6FF00] w-36 h-24 sm:w-44 sm:h-28 flex items-center justify-center mb-4">
+                    <img src="logo-loading.jpg" alt="Lanna Products Logo"
+                         class="w-full h-full object-contain"
+                         onerror="handleLogoFallback(this)">
+                </div>
+
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#1B5E20] text-[#C6FF00] border border-[#C6FF00]/50 mb-2">
+                    <i class="fa-solid fa-leaf"></i> สืบสานประเพณีลอยกระทงและยี่เป็งล้านนา
+                </span>
+
+                <h1 class="text-xl sm:text-2xl font-bold text-white leading-snug">
+                    วาซาบิญี่ปุ่นแท้ by Lanna Products
+                </h1>
+
+                <p class="font-lanna text-3xl sm:text-4xl text-[#FFD54F] mt-1 mb-3 drop-shadow">
+                    ขอเชิญร่วมลอยกระทงออนไลน์
+                </p>
+
+                <p class="text-xs sm:text-sm text-amber-100/90 leading-relaxed mb-6">
+                    เลือกกระทงใบวาซาบิสุดพิเศษ ดูตัวอย่างกระทงของคุณ<br class="hidden sm:inline">
+                    เขียนคำอธิษฐานขอพรพระแม่คงคา และรับการ์ดอวยพรจากน้องวาซาบิเจ้า!
+                </p>
+
+                <!-- ปุ่มหลักสำหรับเข้าสู่ลานลอยกระทงและเปิดเพลง song.mp3 -->
+                <button type="button" onclick="enterFestivalWithMusic()"
+                        class="w-full py-3.5 px-6 rounded-2xl btn-wasabi-gold text-white font-bold text-base sm:text-lg shadow-xl flex items-center justify-center gap-2.5 cursor-pointer group">
+                    <span class="text-xl group-hover:scale-110 transition-transform">🪷</span>
+                    <span>เข้าสู่ลานลอยกระทง (เปิดเสียงเพลง)</span>
+                    <i class="fa-solid fa-music text-[#C6FF00] animate-bounce"></i>
+                </button>
+
+                <!-- ปุ่มรองแบบปิดเสียง -->
+                <button type="button" onclick="enterFestivalMuted()"
+                        class="mt-3 text-xs text-amber-200/75 hover:text-amber-100 underline underline-offset-4 cursor-pointer">
+                    เข้าสู่หน้าเว็บแบบปิดเสียงเพลง
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         2. แถบหัวเว็บไซต์ (Header: โลโก้ + ชื่อเพจ + ปุ่มเสียง + ยอดนับเรียลไทม์)
+    ====================================================================== -->
+    <header class="w-full bg-gradient-to-r from-[#fef9c3] via-[#fef08a] to-[#fde047] text-slate-900 border-b-4 border-[#1B5E20] shadow-lg z-30">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3 flex flex-wrap items-center justify-between gap-2.5">
+            
+            <!-- โลโก้และชื่อเพจ -->
+            <div class="flex items-center gap-3 sm:gap-4 min-w-0">
+                <div class="bg-white rounded-2xl p-1.5 sm:p-2 shadow-md border-2 border-[#1B5E20]/25 flex-shrink-0 w-16 h-14 sm:w-24 sm:h-16 flex items-center justify-center overflow-hidden">
+                    <img src="logo-loading.jpg" alt="Lanna Products Logo"
+                         class="w-full h-full object-contain"
+                         onerror="handleLogoFallback(this)">
+                </div>
+
+                <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        <h2 class="text-base sm:text-xl md:text-2xl font-bold text-[#1B5E20] tracking-tight truncate">
+                            วาซาบิญี่ปุ่นแท้ by Lanna Products
+                        </h2>
+                        <span class="hidden md:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#1B5E20] text-[#C6FF00]">
+                            <i class="fa-solid fa-leaf text-[10px]"></i> สืบสานประเพณีลอยกระทง
+                        </span>
+                    </div>
+                    <p class="text-xs sm:text-sm font-medium text-amber-950/90 mt-0.5 truncate">
+                        ลอยกระทงออนไลน์ • ริมสายน้ำปิง เชียงใหม่
+                    </p>
+                </div>
+            </div>
+
+            <!-- ปุ่มเปิด/ปิดเสียงเพลง song.mp3 และตัวนับจำนวนกระทงแบบเรียลไทม์ -->
+            <div class="flex items-center gap-2 ml-auto sm:ml-0">
+                <button type="button" id="musicToggleBtn" onclick="toggleBgMusic()"
+                        title="เปิด/ปิดเพลงรำวงลอยกระทง (song.mp3)"
+                        class="bg-white hover:bg-amber-50 text-[#1B5E20] px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-full shadow-md border-2 border-[#1B5E20]/30 flex items-center gap-1.5 text-xs sm:text-sm font-bold transition cursor-pointer">
+                    <i id="musicIcon" class="fa-solid fa-volume-xmark text-amber-600"></i>
+                    <span id="musicText">ปิดเสียงเพลง</span>
+                </button>
+
+                <div class="bg-[#1B5E20] text-white px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full shadow-md border border-[#C6FF00]/60 flex items-center gap-1.5 text-xs sm:text-sm">
+                    <span class="text-base">🪷</span>
+                    <span class="text-amber-100 hidden md:inline">ร่วมลอยแล้ว:</span>
+                    <span id="totalKrathongCount" class="font-bold text-[#C6FF00] text-sm sm:text-base">0</span>
+                    <span class="text-amber-100 text-xs">ใบ</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- แถบแจ้งเตือนกรณีไม่พบไฟล์ song.mp3 -->
+        <div id="audioMissingBanner" class="hidden bg-amber-900 text-amber-100 text-[11px] sm:text-xs py-1.5 px-4 text-center border-t border-amber-700">
+            <i class="fa-solid fa-circle-info text-[#FFD54F] mr-1"></i>
+            ไม่พบไฟล์เสียง <code class="bg-black/40 px-1.5 py-0.5 rounded text-[#C6FF00]">song.mp3</code> ในโฟลเดอร์ (ระบบจะใช้เสียงกระดิ่งและน้ำกระเพื่อมแทน หากต้องการเปิดเพลงรำวง กรุณาวางไฟล์ <code class="text-[#C6FF00]">song.mp3</code> คู่กับ <code class="text-[#C6FF00]">index.html</code>)
+        </div>
+    </header>
+
+    <!-- =====================================================================
+         3. พื้นที่หลัก: ฉากแม่น้ำปิงยามค่ำคืน & แผงเลือกกระทงพร้อมตัวอย่างเรียลไทม์
+    ====================================================================== -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-2 sm:px-4 py-3 sm:py-5 grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+        
+        <!-- ฝั่งซ้าย (7 คอลัมน์): ฉากแม่น้ำปิง เชียงใหม่ & มาสคอตน้องวาซาบิล้านนา -->
+        <section class="lg:col-span-7 relative rounded-3xl overflow-hidden border-2 border-[#FFD54F]/45 shadow-2xl flex flex-col justify-between min-h-[460px] sm:min-h-[620px] night-sky-bg">
+            
+            <!-- ท้องฟ้ายามค่ำคืน: ดวงดาว, พระจันทร์เต็มดวง, โคมลอยยี่เป็ง และคุ้มวัดล้านนา -->
+            <div class="relative w-full h-[45%] pointer-events-none">
+                <div id="starsContainer" class="absolute inset-0"></div>
+                <div id="lanternsContainer" class="absolute inset-0 overflow-hidden"></div>
+
+                <!-- พระจันทร์เต็มดวง -->
+                <div class="absolute top-5 left-1/2 -translate-x-1/2 sm:left-[48%] w-20 h-20 sm:w-28 sm:h-28 rounded-full full-moon"></div>
+
+                <!-- ป้ายแนะนำกลางท้องฟ้า -->
+                <div class="relative z-10 text-center pt-3 sm:pt-4 px-3">
+                    <span class="inline-block px-3.5 py-1 rounded-full bg-black/40 backdrop-blur-xs border border-[#FFD54F]/35 text-[11px] sm:text-xs text-[#FFD54F]">
+                        ✨ แตะที่กระทงในแม่น้ำปิงเพื่ออ่านคำอธิษฐาน ✨
+                    </span>
+                </div>
+
+                <!-- เงาคุ้มวัดล้านนาและทิวเขาเชียงใหม่ 2 ฝั่งแม่น้ำ -->
+                <svg class="absolute bottom-0 left-0 w-full h-24 sm:h-32 text-[#06121e] fill-current" viewBox="0 0 1200 180" preserveAspectRatio="none">
+                    <path d="M0,180 L0,120 L35,120 L55,85 L75,60 L82,25 L86,5 L90,25 L97,60 L117,85 L137,120 L165,120 L180,95 L195,95 L210,120 L270,135 L340,145 L430,152 L530,155 L650,155 L760,150 L850,140 L920,125 L945,90 L965,65 L973,30 L977,10 L981,30 L989,65 L1009,90 L1034,125 L1075,125 L1095,85 L1105,50 L1110,20 L1115,50 L1125,85 L1145,125 L1200,125 L1200,180 Z" />
+                    <circle cx="86" cy="95" r="2.5" fill="#FFD54F" opacity="0.85" />
+                    <circle cx="977" cy="95" r="2.5" fill="#FFD54F" opacity="0.85" />
+                    <circle cx="1110" cy="95" r="2" fill="#C6FF00" opacity="0.75" />
+                </svg>
+            </div>
+
+            <!-- ผืนน้ำแม่น้ำปิงยามค่ำคืน -->
+            <div class="relative w-full h-[55%] river-surface border-t border-[#FFD54F]/35">
+                <!-- เงาพระจันทร์สะท้อนผิวน้ำ -->
+                <div class="absolute top-0 left-1/2 -translate-x-1/2 sm:left-[48%] w-36 sm:w-52 h-full river-moon-reflection pointer-events-none"></div>
+
+                <!-- ระลอกคลื่นน้ำ -->
+                <div class="water-ripple" style="top: 16%; --speed: 12s;"></div>
+                <div class="water-ripple" style="top: 35%; --speed: 9s;"></div>
+                <div class="water-ripple" style="top: 56%; --speed: 14s;"></div>
+                <div class="water-ripple" style="top: 77%; --speed: 11s;"></div>
+
+                <!-- ข้อความแนะนำเมื่อยังไม่มีกระทงในแม่น้ำ (ตอนยอดเป็น 0) -->
+                <div id="emptyRiverHint" class="absolute inset-0 flex items-center justify-center pointer-events-none px-4 pb-16">
+                    <div class="bg-slate-950/60 backdrop-blur-xs border border-[#FFD54F]/30 px-4 py-2.5 rounded-2xl text-center">
+                        <p class="text-xs sm:text-sm text-amber-100/90">
+                            🪷 แม่น้ำปิงกำลังรอรับคำอธิษฐานแรกของคุณอยู่เจ้า~
+                        </p>
+                    </div>
+                </div>
+
+                <!-- ชั้นแสดงกระทงที่กำลังลอยในน้ำ -->
+                <div id="riverKrathongsLayer" class="absolute inset-0 overflow-hidden"></div>
+
+                <!-- มาสคอตน้องวาซาบิล้านนา (56.png) ยืนต้อนรับริมตลิ่งซ้ายล่าง -->
+                <div class="absolute bottom-2 left-2 sm:bottom-3 sm:left-4 z-30 flex items-end gap-1.5 pointer-events-none select-none">
+                    <div class="w-24 h-28 sm:w-32 sm:h-36 mascot-float drop-shadow-[0_6px_14px_rgba(0,0,0,0.65)]">
+                        <img src="56.png" alt="น้องวาซาบิล้านนา"
+                             class="w-full h-full object-contain"
+                             onerror="handleMascotFallback(this)">
+                    </div>
+                    <!-- กล่องคำพูดน่ารักๆ -->
+                    <div class="mb-12 sm:mb-16 bg-white/95 text-[#1B5E20] px-3 py-1.5 rounded-2xl rounded-bl-none shadow-lg border-2 border-[#2E7D32] max-w-[175px] sm:max-w-[215px]">
+                        <p class="text-[11px] sm:text-xs font-bold leading-snug">
+                            "มาลอยกระทงใบวาซาบิ กับน้องวาซาบิกันนะเจ้า~ 💚"
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ฝั่งขวา (5 คอลัมน์): แผงเลือกกระทง + กล่องตัวอย่างกระทงขนาดใหญ่ + คำอธิษฐาน -->
+        <aside class="lg:col-span-5 bg-[#fffbeb] text-slate-900 rounded-3xl border-2 border-[#FFD54F] shadow-2xl p-4 sm:p-5 flex flex-col justify-between gap-3.5">
+            
+            <div class="space-y-3.5">
+                <!-- ขั้นตอนที่ 1: เลือกกระทง 4 แบบ -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-sm sm:text-base font-bold text-[#1B5E20] flex items-center gap-1.5">
+                            <span class="w-6 h-6 rounded-full bg-[#1B5E20] text-[#C6FF00] text-xs flex items-center justify-center font-bold">1</span>
+                            <span>เลือกแบบกระทงของคุณ</span>
+                        </h3>
+                        <span class="text-[11px] font-medium text-amber-800 bg-amber-200/75 px-2.5 py-0.5 rounded-full">แตะเพื่อดูตัวอย่าง</span>
+                    </div>
+
+                    <div id="krathongOptionsGrid" class="grid grid-cols-4 gap-2">
+                        <!-- ปุ่มตัวเลือกกระทงสร้างด้วย JS -->
+                    </div>
+
+                    <!-- =========================================================
+                         กล่องแสดงตัวอย่างกระทงขนาดใหญ่แบบเรียลไทม์ (Live Krathong Preview)
+                    ========================================================== -->
+                    <div class="mt-3 rounded-2xl night-sky-bg border-2 border-[#2E7D32] p-3 sm:p-3.5 shadow-inner relative overflow-hidden">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-[11px] font-semibold text-[#C6FF00] flex items-center gap-1">
+                                <i class="fa-solid fa-eye"></i> ตัวอย่างกระทงของคุณ
+                            </span>
+                            <span id="previewTypeBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FFD54F] text-slate-900">
+                                เอกลักษณ์เพจ
+                            </span>
+                        </div>
+
+                        <div class="flex items-center gap-3 sm:gap-4">
+                            <!-- ภาพกระทงตัวอย่างขนาดใหญ่พร้อมป้ายชื่อเรียลไทม์ -->
+                            <div class="relative flex-shrink-0 w-28 sm:w-32 flex flex-col items-center justify-center py-1">
+                                <div id="livePreviewNameTag" class="mb-1 px-2.5 py-0.5 rounded-full bg-slate-950/85 border border-[#FFD54F]/60 text-[10px] sm:text-xs font-bold text-[#FFD54F] max-w-[125px] truncate shadow">
+                                    ชื่อของคุณ
+                                </div>
+                                <div id="livePreviewSvgBox" class="w-24 h-22 sm:w-28 sm:h-24 krathong-bob drop-shadow-[0_6px_12px_rgba(255,213,79,0.25)]">
+                                    <!-- SVG กระทงขนาดใหญ่ -->
+                                </div>
+                                <!-- ระลอกน้ำจำลองใต้กระทงตัวอย่าง -->
+                                <div class="w-24 h-2.5 rounded-full bg-sky-400/20 border border-sky-300/30 -mt-1"></div>
+                            </div>
+
+                            <!-- ชื่อแบบกระทงและความหมายมงคล -->
+                            <div class="flex-1 min-w-0 text-left">
+                                <h4 id="livePreviewTitle" class="text-sm sm:text-base font-bold text-white leading-tight">
+                                    ใบวาซาบิ (เอกลักษณ์เพจ)
+                                </h4>
+                                <p id="livePreviewDesc" class="text-[11px] sm:text-xs text-amber-100/90 mt-1 leading-relaxed">
+                                    กระทงใบวาซาบิสีเขียวสดใส ขอบทองมงคล เสริมพลังความสดชื่น ซาบซ่า มีชีวิตชีวาตลอดปี
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ขั้นตอนที่ 2: พิมพ์ชื่อและคำอธิษฐาน -->
+                <div class="space-y-2.5 pt-2 border-t border-amber-200">
+                    <h3 class="text-sm sm:text-base font-bold text-[#1B5E20] flex items-center gap-1.5">
+                        <span class="w-6 h-6 rounded-full bg-[#1B5E20] text-[#C6FF00] text-xs flex items-center justify-center font-bold">2</span>
+                        <span>พิมพ์ชื่อและคำอธิษฐาน</span>
+                    </h3>
+
+                    <div>
+                        <label for="visitorNameInput" class="block text-xs font-semibold text-slate-700 mb-1">ชื่อของคุณ</label>
+                        <input type="text" id="visitorNameInput" maxlength="25" oninput="updateLivePreviewName()" placeholder="เช่น น้องมายด์, ครอบครัวใจดี"
+                               class="w-full px-3 py-2 bg-white border-2 border-amber-300 focus:border-[#2E7D32] rounded-xl text-sm text-slate-900 placeholder-slate-400 outline-none transition">
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label for="visitorWishInput" class="text-xs font-semibold text-slate-700">คำอธิษฐาน</label>
+                            <button type="button" onclick="pickRandomWish()"
+                                    class="text-[11px] font-semibold text-[#1B5E20] hover:text-[#2E7D32] bg-[#C6FF00]/45 hover:bg-[#C6FF00]/75 px-2.5 py-0.5 rounded-full border border-[#2E7D32]/30 transition flex items-center gap-1 cursor-pointer">
+                                <i class="fa-solid fa-wand-magic-sparkles text-[10px]"></i>
+                                <span>สุ่มคำอวยพร</span>
+                            </button>
+                        </div>
+                        <textarea id="visitorWishInput" rows="2" maxlength="85" placeholder="พิมพ์คำขอพรของคุณที่นี่..."
+                                  class="w-full px-3 py-2 bg-white border-2 border-amber-300 focus:border-[#2E7D32] rounded-xl text-sm text-slate-900 placeholder-slate-400 outline-none transition resize-none"></textarea>
+                    </div>
+
+                    <!-- ปุ่มลอยกระทง -->
+                    <button type="button" onclick="launchKrathong()"
+                            class="w-full py-3 px-5 rounded-2xl btn-wasabi-gold text-white font-bold text-base shadow-lg flex items-center justify-center gap-2 cursor-pointer">
+                        <span class="text-xl">🪷</span>
+                        <span>ลอยกระทงลงแม่น้ำปิง</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ขั้นตอนที่ 3: รายการกระทงล่าสุดจากลูกเพจ (ซิงก์ออนไลน์) -->
+            <div class="pt-2.5 border-t-2 border-amber-200/80 flex flex-col gap-2">
+                <div class="flex items-center justify-between">
+                    <h4 class="text-xs sm:text-sm font-bold text-[#1B5E20] flex items-center gap-1.5">
+                        <i class="fa-solid fa-comments text-[#2E7D32]"></i>
+                        <span>กระทงล่าสุดจากลูกเพจ (ออนไลน์)</span>
+                    </h4>
+                    <button type="button" onclick="openResetConfirmModal()" title="ล้างข้อมูลทั้งหมดในฐานข้อมูล"
+                            class="text-[10px] text-slate-400 hover:text-red-600 underline cursor-pointer">
+                        ล้างข้อมูลทั้งหมด
+                    </button>
+                </div>
+
+                <div id="recentFollowersList" class="space-y-1.5 max-h-[120px] overflow-y-auto pr-1 custom-scroll">
+                    <!-- แสดงข้อความว่างเริ่มต้น -->
+                </div>
+
+                <!-- ปุ่มเปิดการ์ดอวยพรสำหรับแชร์ลงเฟซบุ๊ก -->
+                <button type="button" onclick="openShareCardModal()"
+                        class="w-full py-2.5 px-4 rounded-xl bg-[#1877F2] hover:bg-[#166FE5] text-white font-semibold text-xs sm:text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer">
+                    <i class="fa-brands fa-facebook text-base"></i>
+                    <span>เปิดการ์ดอวยพรแชร์ลงเฟซบุ๊ก</span>
+                </button>
+            </div>
+        </aside>
+    </main>
+
+    <!-- =====================================================================
+         4. ส่วนท้ายเว็บไซต์ (Footer)
+    ====================================================================== -->
+    <footer class="w-full bg-[#040b13] border-t border-[#2E7D32]/40 py-3 px-4 text-center text-xs text-amber-100/80">
+        <p>© วาซาบิญี่ปุ่นแท้ by Lanna Products | สืบสานประเพณีลอยกระทงและยี่เป็งล้านนา</p>
+    </footer>
+
+    <!-- =====================================================================
+         5. หน้าต่างการ์ดอวยพรหลังกดลอยกระทง
+    ====================================================================== -->
+    <div id="shareCardModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+        <div class="w-full max-w-md bg-slate-900 border-2 border-[#FFD54F] rounded-3xl overflow-hidden shadow-2xl">
+            
+            <!-- พื้นที่การ์ดอวยพรสำหรับแคปหน้าจอ -->
+            <div class="relative p-5 sm:p-6 text-center night-sky-bg border-b border-[#FFD54F]/30 overflow-hidden">
+                <div class="absolute -top-12 -right-12 w-36 h-36 rounded-full full-moon opacity-50 pointer-events-none"></div>
+
+                <div class="relative z-10">
+                    <!-- โลโก้บริษัทด้านบนการ์ด (logo-loading.jpg) -->
+                    <div class="inline-flex items-center gap-2 bg-white/95 px-3.5 py-1 rounded-full shadow-md mb-2.5">
+                        <img src="logo-loading.jpg" alt="Lanna Products" class="h-6 w-auto object-contain" onerror="handleLogoFallback(this, true)">
+                        <span class="text-[11px] font-bold text-[#1B5E20]">วาซาบิญี่ปุ่นแท้ by Lanna Products</span>
+                    </div>
+
+                    <h3 class="font-lanna text-3xl sm:text-4xl text-[#FFD54F] drop-shadow">
+                        สุขสันต์วันลอยกระทง
+                    </h3>
+                    <p class="text-[11px] text-amber-100/85 mb-3">ประเพณียี่เป็งล้านนา • ขอขมาพระแม่คงคา</p>
+
+                    <!-- มาสคอตน้องวาซาบิล้านนา (56.png) ยืนคู่กับกระทงที่เลือก -->
+                    <div class="flex items-center justify-center gap-3 my-2">
+                        <div class="w-20 h-24 mascot-float">
+                            <img src="56.png" alt="น้องวาซาบิ" class="w-full h-full object-contain" onerror="handleMascotFallback(this)">
+                        </div>
+                        <div id="modalKrathongPreview" class="w-24 h-24 krathong-bob">
+                            <!-- รูปกระทงที่ผู้ใช้เลือก -->
+                        </div>
+                    </div>
+
+                    <!-- กล่องชื่อและคำอธิษฐาน -->
+                    <div class="mt-3 bg-slate-950/80 border border-[#C6FF00]/45 rounded-2xl p-3.5 backdrop-blur-md">
+                        <p class="text-[11px] text-[#C6FF00]">คำอธิษฐานของ</p>
+                        <p id="modalCardName" class="text-base sm:text-lg font-bold text-white mb-1.5">คุณผู้ร่วมกิจกรรม</p>
+                        <p id="modalCardWish" class="text-xs sm:text-sm text-amber-100 italic leading-relaxed">
+                            "ขอให้มีความสุข สุขภาพแข็งแรง เฮงๆ รวยๆ ตลอดปี"
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ปุ่มคำสั่งใต้การ์ด -->
+            <div class="p-4 bg-slate-900 space-y-2.5">
+                <div class="bg-[#1B5E20]/35 border border-[#C6FF00]/35 rounded-xl p-2 text-center">
+                    <p class="text-xs text-amber-100">
+                        📸 <strong>แคปหน้าจอการ์ดด้านบน</strong> หรือกดคัดลอกข้อความไปวางคอมเมนต์ใต้โพสต์ในเพจได้เลย!
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <button type="button" onclick="copyBlessingToClipboard()"
+                            class="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-[#C6FF00] border border-slate-700 text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer">
+                        <i class="fa-regular fa-copy"></i>
+                        <span>คัดลอกข้อความไปคอมเมนต์</span>
+                    </button>
+                    <button type="button" onclick="closeShareCardModal()"
+                            class="py-2.5 px-3 rounded-xl btn-wasabi-gold text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 cursor-pointer">
+                        <i class="fa-solid fa-water"></i>
+                        <span>ดูกระทงในแม่น้ำ</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         6. หน้าต่างอ่านคำอธิษฐานเมื่อแตะที่กระทงในแม่น้ำ
+    ====================================================================== -->
+    <div id="inspectKrathongModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/65 backdrop-blur-xs" onclick="closeInspectModal()">
+        <div class="w-full max-w-xs bg-slate-900/95 border-2 border-[#FFD54F] rounded-3xl p-5 text-center shadow-2xl" onclick="event.stopPropagation()">
+            <div id="inspectSvgBox" class="w-24 h-24 mx-auto mb-2 krathong-bob"></div>
+            <span class="text-[11px] text-[#C6FF00] font-medium">คำอธิษฐานจาก</span>
+            <h4 id="inspectFollowerName" class="text-lg font-bold text-white mt-0.5 mb-2">ชื่อลูกเพจ</h4>
+            <p id="inspectFollowerWish" class="text-sm text-amber-100 bg-slate-800/90 p-3 rounded-2xl border border-amber-500/30 italic">
+                "คำอธิษฐาน"
+            </p>
+            <button type="button" onclick="closeInspectModal()" class="mt-4 w-full py-2 rounded-xl bg-[#1B5E20] hover:bg-[#2E7D32] text-xs font-semibold text-white transition cursor-pointer">
+                ปิดหน้าต่าง
+            </button>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         7. หน้าต่างยืนยันการล้างข้อมูลออนไลน์
+    ====================================================================== -->
+    <div id="resetConfirmModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/75 backdrop-blur-xs" onclick="closeResetConfirmModal()">
+        <div class="w-full max-w-xs bg-slate-900 border-2 border-[#FFD54F] rounded-3xl p-5 text-center shadow-2xl" onclick="event.stopPropagation()">
+            <div class="w-12 h-12 rounded-full bg-amber-500/20 text-[#FFD54F] flex items-center justify-center mx-auto mb-3 text-xl">
+                <i class="fa-solid fa-rotate-left"></i>
+            </div>
+            <h4 class="text-base font-bold text-white mb-1">ล้างข้อมูลกระทงทั้งหมด?</h4>
+            <p class="text-xs text-slate-300 mb-4">
+                ข้อมูลกระทงทั้งหมดบนฐานข้อมูลออนไลน์จะถูกลบและรีเซ็ตยอดกลับเป็น 0 ใบ
+            </p>
+            <div class="grid grid-cols-2 gap-2">
+                <button type="button" onclick="closeResetConfirmModal()" class="py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 cursor-pointer">
+                    ยกเลิก
+                </button>
+                <button type="button" onclick="confirmResetKrathongs()" class="py-2 rounded-xl bg-red-600 hover:bg-red-500 text-xs font-bold text-white cursor-pointer">
+                    ยืนยันล้างข้อมูล
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- กล่องแจ้งเตือน Toast (ไม่ใช้ alert) -->
+    <div id="toastBanner" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 hidden bg-[#1B5E20] border-2 border-[#C6FF00] text-white px-4 py-2.5 rounded-full shadow-2xl text-xs sm:text-sm items-center gap-2">
+        <i class="fa-solid fa-circle-check text-[#C6FF00]"></i>
+        <span id="toastBannerText">แจ้งเตือน</span>
+    </div>
+
+    <!-- =====================================================================
+         JAVASCRIPT LOGIC (FIREBASE REALTIME DATABASE INTEGRATION)
+    ====================================================================== -->
+    <script>
+        // ตั้งค่าการเชื่อมต่อ Firebase Realtime Database
+        const firebaseConfig = {
+            databaseURL: "https://lanna-loykrathong-default-rtdb.asia-southeast1.firebasedatabase.app/"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const dbRef = firebase.database().ref('krathongs');
+
+        // รูปแบบกระทงทั้ง 4 แบบ พร้อมชื่อเต็ม คำอธิบายความหมาย และ SVG
+        const KRATHONG_STYLES = [
+            {
+                id: 'wasabi',
+                shortName: 'ใบวาซาบิ',
+                fullName: 'ใบวาซาบิ (เอกลักษณ์เพจ)',
+                badge: 'เอกลักษณ์เพจ',
+                description: 'กระทงใบวาซาบิสีเขียวสดใส ขอบทองมงคล เสริมพลังความสดชื่น ซาบซ่า มีชีวิตชีวาตลอดปี',
+                svg: () => `
+                    <svg viewBox="0 0 120 110" class="w-full h-full overflow-visible">
+                        <circle cx="60" cy="28" r="26" fill="rgba(198, 255, 0, 0.25)" />
+                        <line x1="53" y1="60" x2="48" y2="25" stroke="#78350f" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="67" y1="60" x2="72" y2="25" stroke="#78350f" stroke-width="2" stroke-linecap="round"/>
+                        <circle cx="48" cy="25" r="2" fill="#ef4444" class="flame-flicker"/>
+                        <circle cx="72" cy="25" r="2" fill="#ef4444" class="flame-flicker"/>
+                        <rect x="57" y="36" width="6" height="25" rx="2" fill="#C6FF00" />
+                        <path d="M60 20 Q65 29 60 35 Q55 29 60 20 Z" fill="#FFF9C4" class="flame-flicker"/>
+                        <path d="M24 72 C18 52, 42 46, 54 62 Z" fill="#1B5E20" stroke="#C6FF00" stroke-width="1.8"/>
+                        <path d="M96 72 C102 52, 78 46, 66 62 Z" fill="#1B5E20" stroke="#C6FF00" stroke-width="1.8"/>
+                        <path d="M38 72 C36 46, 84 46, 82 72 Z" fill="#2E7D32" stroke="#C6FF00" stroke-width="1.8"/>
+                        <path d="M60 50 L60 72 M60 60 L46 54 M60 60 L74 54" stroke="#C6FF00" stroke-width="1.5" stroke-linecap="round"/>
+                        <circle cx="45" cy="68" r="6" fill="#FFD54F" />
+                        <circle cx="75" cy="68" r="6" fill="#FFD54F" />
+                        <path d="M16 70 Q60 82 104 70 L95 91 Q60 101 25 91 Z" fill="#1B5E20" stroke="#C6FF00" stroke-width="2"/>
+                    </svg>`
+            },
+            {
+                id: 'traditional',
+                shortName: 'ใบตองล้านนา',
+                fullName: 'ใบตองล้านนา (ดั้งเดิม)',
+                badge: 'ดั้งเดิม',
+                description: 'กระทงใบตองกลีบผกากรองประดับดอกดาวเรืองและบานไม่รู้โรย สืบสานประเพณียี่เป็งล้านนาอันงดงาม',
+                svg: () => `
+                    <svg viewBox="0 0 120 110" class="w-full h-full overflow-visible">
+                        <circle cx="60" cy="30" r="24" fill="rgba(255, 245, 157, 0.28)" />
+                        <line x1="52" y1="62" x2="46" y2="25" stroke="#92400e" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="60" y1="62" x2="60" y2="22" stroke="#92400e" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="68" y1="62" x2="74" y2="25" stroke="#92400e" stroke-width="2" stroke-linecap="round"/>
+                        <circle cx="46" cy="25" r="2" fill="#ef4444" class="flame-flicker"/>
+                        <circle cx="60" cy="22" r="2" fill="#ef4444" class="flame-flicker"/>
+                        <circle cx="74" cy="25" r="2" fill="#ef4444" class="flame-flicker"/>
+                        <rect x="57" y="38" width="6" height="26" rx="2" fill="#FFD54F" />
+                        <path d="M60 22 Q65 31 60 37 Q55 31 60 22 Z" fill="#FFF9C4" class="flame-flicker"/>
+                        <circle cx="42" cy="64" r="7" fill="#f472b6" />
+                        <circle cx="78" cy="64" r="7" fill="#f472b6" />
+                        <circle cx="60" cy="63" r="8" fill="#fb923c" />
+                        <path d="M22 72 L34 55 L46 72 Z" fill="#15803d" />
+                        <path d="M38 72 L50 52 L62 72 Z" fill="#16a34a" />
+                        <path d="M58 72 L70 52 L82 72 Z" fill="#16a34a" />
+                        <path d="M74 72 L86 55 L98 72 Z" fill="#15803d" />
+                        <path d="M16 70 Q60 82 104 70 L96 90 Q60 100 24 90 Z" fill="#14532d" />
+                        <path d="M16 70 Q60 80 104 70 L101 76 Q60 86 19 76 Z" fill="#22c55e" />
+                    </svg>`
+            },
+            {
+                id: 'lotus',
+                shortName: 'ดอกบัวชมพู',
+                fullName: 'ดอกบัวชมพู (เมตตามหานิยม)',
+                badge: 'เมตตามหานิยม',
+                description: 'กระทงกลีบบัวหลวงสีชมพูอ่อนหวาน เสริมสิริมงคลด้านความรัก ความเมตตา และความสงบร่มเย็น',
+                svg: () => `
+                    <svg viewBox="0 0 120 110" class="w-full h-full overflow-visible">
+                        <circle cx="60" cy="30" r="24" fill="rgba(253, 224, 71, 0.25)" />
+                        <line x1="54" y1="60" x2="50" y2="26" stroke="#78350f" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="66" y1="60" x2="70" y2="26" stroke="#78350f" stroke-width="2" stroke-linecap="round"/>
+                        <circle cx="50" cy="26" r="1.8" fill="#f87171" class="flame-flicker"/>
+                        <circle cx="70" cy="26" r="1.8" fill="#f87171" class="flame-flicker"/>
+                        <rect x="57.5" y="38" width="5" height="24" rx="2" fill="#fde047" />
+                        <path d="M60 23 Q64 31 60 37 Q56 31 60 23 Z" fill="#fef9c3" class="flame-flicker"/>
+                        <path d="M40 74 Q45 48 60 46 Q75 48 80 74 Z" fill="#f472b6" />
+                        <path d="M24 76 Q32 52 50 56 Q46 74 44 80 Z" fill="#ec4899" />
+                        <path d="M96 76 Q88 52 70 56 Q74 74 76 80 Z" fill="#ec4899" />
+                        <path d="M44 80 Q60 50 76 80 Z" fill="#f9a8d4" />
+                        <ellipse cx="60" cy="84" rx="46" ry="12" fill="#15803d" />
+                        <path d="M18 82 Q60 94 102 82" stroke="#4ade80" stroke-width="2" fill="none"/>
+                    </svg>`
+            },
+            {
+                id: 'bread',
+                shortName: 'กระทงขนมปัง',
+                fullName: 'กระทงขนมปัง (รักษ์โลก)',
+                badge: 'รักษ์โลก',
+                description: 'กระทงขนมปังรูปเต่ามงคล ย่อยสลายง่าย เป็นมิตรต่อสายน้ำปิงและเป็นอาหารให้ปลาน้อยได้อิ่มบุญ',
+                svg: () => `
+                    <svg viewBox="0 0 120 110" class="w-full h-full overflow-visible">
+                        <circle cx="60" cy="28" r="22" fill="rgba(253, 224, 71, 0.25)" />
+                        <rect x="57.5" y="36" width="5" height="22" rx="2" fill="#fb7185" />
+                        <path d="M60 21 Q64 29 60 35 Q56 29 60 21 Z" fill="#fef08a" class="flame-flicker"/>
+                        <ellipse cx="32" cy="84" rx="10" ry="6" fill="#d97706" />
+                        <ellipse cx="88" cy="84" rx="10" ry="6" fill="#d97706" />
+                        <circle cx="100" cy="72" r="11" fill="#f59e0b" />
+                        <circle cx="103" cy="70" r="2" fill="#1e293b" />
+                        <circle cx="105" cy="74" r="1.5" fill="#fb7185" />
+                        <path d="M24 82 C24 52, 94 52, 94 82 Z" fill="#d97706" />
+                        <path d="M28 80 C28 56, 90 56, 90 80 Z" fill="#fbbf24" />
+                        <path d="M45 60 L40 80 M60 57 L60 80 M75 60 L80 80 M32 70 L86 70" stroke="#b45309" stroke-width="2" stroke-linecap="round"/>
+                    </svg>`
+            }
+        ];
+
+        // คลังคำอวยพรสไตล์วาซาบิญี่ปุ่นแท้และล้านนา
+        const AUSPICIOUS_WISHES = [
+            "ขอให้ชีวิตสดชื่น ซาบซ่า มีพลังบวกเหมือนวาซาบิญี่ปุ่นแท้ตลอดปีเจ้า!",
+            "ขอขมาพระแม่คงคา ลอยความทุกข์ไปกับสายน้ำปิง พบเจอแต่ความสุขความเจริญ",
+            "ขอให้การงานรุ่งเรือง เงินทองไหลมาเทมา สุขภาพแข็งแรงทั้งครอบครัว",
+            "ขอพรยี่เป็งล้านนาดลบันดาลให้สมหวังในสิ่งที่ปรารถนาทุกประการ",
+            "ขอให้มีรอยยิ้มสดใส กิจการค้าขายร่ำรวย เฮงๆ ปังๆ ตลอดปี",
+            "ขอให้พบเจอแต่กัลยาณมิตรที่ดี เดินทางปลอดภัย ราบรื่นทุกเส้นทาง"
+        ];
+
+        let selectedStyleId = 'wasabi';
+        let riverKrathongs = [];
+        let latestFollowerKrathong = null;
+
+        // =====================================================================
+        // ระบบเสียงเพลง (song.mp3) และเอฟเฟกต์ Web Audio API
+        // =====================================================================
+        const bgMusicEl = document.getElementById('bgMusic');
+        let isAudioMissing = false;
+
+        bgMusicEl.addEventListener('error', () => {
+            isAudioMissing = true;
+            document.getElementById('audioMissingBanner').classList.remove('hidden');
+            updateMusicUI(false, true);
+        });
+
+        bgMusicEl.addEventListener('loadeddata', () => {
+            isAudioMissing = false;
+            document.getElementById('audioMissingBanner').classList.add('hidden');
+        });
+
+        function updateMusicUI(isPlaying, missing = false) {
+            const btn = document.getElementById('musicToggleBtn');
+            const icon = document.getElementById('musicIcon');
+            const text = document.getElementById('musicText');
+
+            if (missing) {
+                icon.className = 'fa-solid fa-volume-xmark text-amber-600';
+                text.textContent = 'ปิดเสียงเพลง';
+                btn.classList.remove('ring-2', 'ring-[#C6FF00]');
+                return;
+            }
+
+            if (isPlaying) {
+                icon.className = 'fa-solid fa-volume-high text-[#1B5E20] animate-pulse';
+                text.textContent = 'กำลังเปิดเพลง';
+                btn.classList.add('ring-2', 'ring-[#C6FF00]');
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark text-amber-600';
+                text.textContent = 'ปิดเสียงเพลง';
+                btn.classList.remove('ring-2', 'ring-[#C6FF00]');
+            }
+        }
+
+        function playSongMp3() {
+            if (isAudioMissing) {
+                document.getElementById('audioMissingBanner').classList.remove('hidden');
+                return;
+            }
+            bgMusicEl.volume = 0.65;
+            const playPromise = bgMusicEl.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    updateMusicUI(true);
+                }).catch(() => {
+                    updateMusicUI(false);
+                });
+            }
+        }
+
+        function pauseSongMp3() {
+            bgMusicEl.pause();
+            updateMusicUI(false);
+        }
+
+        function toggleBgMusic() {
+            if (bgMusicEl.paused) {
+                playSongMp3();
+                if (!isAudioMissing) showToast('เปิดเพลงรำวงลอยกระทงแล้ว 🎶');
+                else showToast('ไม่พบไฟล์ song.mp3 ในโฟลเดอร์เว็บ');
+            } else {
+                pauseSongMp3();
+                showToast('ปิดเสียงเพลงแล้ว');
+            }
+        }
+
+        // เสียงเอฟเฟกต์น้ำกระเพื่อมและกระดิ่งมงคลเมื่อปล่อยกระทง (Web Audio API)
+        function playReleaseChimeAndWater() {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                const ctx = new AudioCtx();
+                const now = ctx.currentTime;
+
+                // เสียงกระดิ่งมงคล 2 โน้ตใสๆ
+                [587.33, 880.00].forEach((freq, i) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now + i * 0.14);
+                    gain.gain.setValueAtTime(0.001, now + i * 0.14);
+                    gain.gain.exponentialRampToValueAtTime(0.14, now + i * 0.14 + 0.03);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.14 + 1.1);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now + i * 0.14);
+                    osc.stop(now + i * 0.14 + 1.15);
+                });
+
+                // เสียงน้ำกระเพื่อมเบาๆ
+                const bufferSize = ctx.sampleRate * 0.5;
+                const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.15));
+                }
+                const noise = ctx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = ctx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(420, now);
+                filter.Q.value = 1.5;
+
+                const noiseGain = ctx.createGain();
+                noiseGain.gain.setValueAtTime(0.08, now);
+                noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+
+                noise.connect(filter);
+                filter.connect(noiseGain);
+                noiseGain.connect(ctx.destination);
+                noise.start(now);
+            } catch (e) {
+                // ข้ามหากเบราว์เซอร์ไม่รองรับ
+            }
+        }
+
+        function enterFestivalWithMusic() {
+            hideWelcomeOverlay();
+            playSongMp3();
+        }
+
+        function enterFestivalMuted() {
+            hideWelcomeOverlay();
+            updateMusicUI(false);
+        }
+
+        function hideWelcomeOverlay() {
+            const overlay = document.getElementById('welcomeOverlay');
+            overlay.classList.add('opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+            }, 450);
+        }
+
+        // =====================================================================
+        // ระบบ Fallback รูปภาพ (logo-loading.jpg และ 56.png)
+        // =====================================================================
+        function handleLogoFallback(imgElement, isSmall = false) {
+            const svgLogo = `
+                <svg viewBox="0 0 180 110" class="${isSmall ? 'h-6 w-auto' : 'w-full h-full'}">
+                    <path d="M90 8 C62 18, 48 45, 58 70 C68 82, 85 84, 90 76 C95 84, 112 82, 122 70 C132 45, 118 18, 90 8 Z" fill="#1B5E20" stroke="#C6FF00" stroke-width="3"/>
+                    <path d="M90 15 L90 85 M90 48 L64 36 M90 48 L116 36 M90 62 L66 56 M90 62 L114 56" stroke="#C6FF00" stroke-width="2.5" stroke-linecap="round"/>
+                    <text x="90" y="102" text-anchor="middle" font-family="Prompt, sans-serif" font-weight="700" font-size="16" fill="#1B5E20">Lanna Products</text>
+                </svg>
+            `;
+            const wrapper = document.createElement('div');
+            wrapper.className = 'w-full h-full flex items-center justify-center';
+            wrapper.innerHTML = svgLogo;
+            imgElement.replaceWith(wrapper);
+        }
+
+        function handleMascotFallback(imgElement) {
+            const svgMascot = `
+                <svg viewBox="0 0 120 140" class="w-full h-full overflow-visible">
+                    <path d="M40 38 L46 22 L56 32 L62 18 L72 32 L80 24 L82 40 C94 50, 96 72, 92 86 L28 86 C24 72, 26 50, 40 38 Z" fill="#7CB342" stroke="#33691E" stroke-width="2.5"/>
+                    <circle cx="48" cy="58" r="3.5" fill="#3E2723"/>
+                    <circle cx="72" cy="58" r="3.5" fill="#3E2723"/>
+                    <path d="M56 64 L60 68 L64 64" stroke="#3E2723" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                    <ellipse cx="40" cy="64" rx="4" ry="2" fill="#FF7043" opacity="0.8"/>
+                    <ellipse cx="80" cy="64" rx="4" ry="2" fill="#FF7043" opacity="0.8"/>
+                    <path d="M26 84 L94 84 L98 108 L22 108 Z" fill="#FFFFFF" stroke="#CFD8DC" stroke-width="1.5"/>
+                    <rect x="24" y="104" width="72" height="10" rx="4" fill="#F57C00"/>
+                    <path d="M52 104 L68 104 L72 124 L48 124 Z" fill="#FB8C00"/>
+                    <path d="M28 114 L92 114 L88 132 L64 132 L60 122 L56 132 L32 132 Z" fill="#0277BD"/>
+                    <ellipse cx="60" cy="96" rx="14" ry="6" fill="#EC4899"/>
+                    <path d="M60 78 Q64 85 60 90 Q56 85 60 78 Z" fill="#FFD54F" class="flame-flicker"/>
+                </svg>
+            `;
+            const wrapper = document.createElement('div');
+            wrapper.className = 'w-full h-full flex items-center justify-center';
+            wrapper.innerHTML = svgMascot;
+            imgElement.replaceWith(wrapper);
+        }
+
+        // =====================================================================
+        // เริ่มต้นทำงานเมื่อโหลดหน้าเว็บ & เชื่อมต่อข้อมูล Firebase แบบเรียลไทม์
+        // =====================================================================
+        window.addEventListener('DOMContentLoaded', () => {
+            createSkyDecorations();
+            renderKrathongOptions();
+            updateKrathongPreviewBox();
+            initFirebaseRealtimeSync();
+            animateRiverFlow();
+        });
+
+        function createSkyDecorations() {
+            const starsBox = document.getElementById('starsContainer');
+            const lanternsBox = document.getElementById('lanternsContainer');
+
+            for (let i = 0; i < 40; i++) {
+                const s = document.createElement('div');
+                s.className = 'star';
+                const sz = Math.random() * 2.5 + 1;
+                s.style.width = `${sz}px`;
+                s.style.height = `${sz}px`;
+                s.style.left = `${Math.random() * 100}%`;
+                s.style.top = `${Math.random() * 82}%`;
+                s.style.setProperty('--dur', `${Math.random() * 3 + 2}s`);
+                s.style.setProperty('--delay', `${Math.random() * 3}s`);
+                starsBox.appendChild(s);
+            }
+
+            for (let i = 0; i < 7; i++) {
+                const l = document.createElement('div');
+                l.className = 'yi-peng-lantern';
+                l.style.left = `${8 + i * 13 + Math.random() * 4}%`;
+                l.style.bottom = '8%';
+                l.style.setProperty('--float-dur', `${20 + Math.random() * 10}s`);
+                l.style.setProperty('--float-delay', `${i * 3}s`);
+                l.innerHTML = `
+                    <svg width="26" height="34" viewBox="0 0 26 34">
+                        <defs>
+                            <radialGradient id="ypGlow${i}" cx="50%" cy="60%" r="50%">
+                                <stop offset="0%" stop-color="#FFF9C4" />
+                                <stop offset="60%" stop-color="#FFB300" />
+                                <stop offset="100%" stop-color="#E65100" />
+                            </radialGradient>
+                        </defs>
+                        <path d="M5 4 Q13 0 21 4 L23 26 Q13 29 3 26 Z" fill="url(#ypGlow${i})" />
+                        <ellipse cx="13" cy="27" rx="5.5" ry="2" fill="#FFFDE7" />
+                    </svg>
+                `;
+                lanternsBox.appendChild(l);
+            }
+        }
+
+        function renderKrathongOptions() {
+            const grid = document.getElementById('krathongOptionsGrid');
+            grid.innerHTML = KRATHONG_STYLES.map(item => {
+                const active = item.id === selectedStyleId;
+                return `
+                    <button type="button" onclick="chooseKrathong('${item.id}')"
+                        class="flex flex-col items-center p-1.5 rounded-2xl border-2 transition cursor-pointer ${
+                            active
+                                ? 'bg-[#1B5E20]/15 border-[#1B5E20] shadow-md scale-[1.03]'
+                                : 'bg-white border-amber-200 hover:border-amber-400 opacity-85 hover:opacity-100'
+                        }">
+                        <div class="w-11 h-11 sm:w-12 sm:h-12">
+                            ${item.svg()}
+                        </div>
+                        <span class="text-[10px] sm:text-[11px] font-bold text-slate-800 mt-1 leading-tight text-center line-clamp-1">
+                            ${item.shortName}
+                        </span>
+                        <span class="text-[8px] sm:text-[9px] font-semibold px-1.5 rounded-full mt-0.5 line-clamp-1 ${
+                            item.id === 'wasabi'
+                                ? 'bg-[#1B5E20] text-[#C6FF00]'
+                                : 'text-amber-700 bg-amber-100'
+                        }">
+                            ${item.badge}
+                        </span>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        // อัปเดตกล่องแสดงตัวอย่างกระทงขนาดใหญ่ทุกครั้งที่เปลี่ยนแบบกระทง
+        function chooseKrathong(id) {
+            selectedStyleId = id;
+            renderKrathongOptions();
+            updateKrathongPreviewBox();
+        }
+
+        function updateKrathongPreviewBox() {
+            const current = KRATHONG_STYLES.find(s => s.id === selectedStyleId) || KRATHONG_STYLES[0];
+            document.getElementById('livePreviewSvgBox').innerHTML = current.svg();
+            document.getElementById('livePreviewTitle').textContent = current.fullName;
+            document.getElementById('livePreviewDesc').textContent = current.description;
+            document.getElementById('previewTypeBadge').textContent = current.badge;
+        }
+
+        // อัปเดตป้ายชื่อบนกระทงตัวอย่างแบบเรียลไทม์เมื่อผู้ใช้พิมพ์ชื่อ
+        function updateLivePreviewName() {
+            const val = document.getElementById('visitorNameInput').value.trim();
+            document.getElementById('livePreviewNameTag').textContent = val || 'ชื่อของคุณ';
+        }
+
+        function pickRandomWish() {
+            const box = document.getElementById('visitorWishInput');
+            const current = box.value.trim();
+            let chosen = AUSPICIOUS_WISHES[Math.floor(Math.random() * AUSPICIOUS_WISHES.length)];
+            while (chosen === current && AUSPICIOUS_WISHES.length > 1) {
+                chosen = AUSPICIOUS_WISHES[Math.floor(Math.random() * AUSPICIOUS_WISHES.length)];
+            }
+            box.value = chosen;
+        }
+
+        // ฟังก์ชันดึงข้อมูลและซิงก์ข้อมูลแบบเรียลไทม์จาก Firebase Realtime Database
+        function initFirebaseRealtimeSync() {
+            dbRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                let savedList = [];
+                
+                if (data) {
+                    Object.keys(data).forEach(key => {
+                        savedList.push(data[key]);
+                    });
+                }
+
+                // อัปเดตตัวเลขจำนวนกระทงบนหน้าจอ
+                document.getElementById('totalKrathongCount').textContent = savedList.length;
+
+                const emptyHint = document.getElementById('emptyRiverHint');
+                const riverLayer = document.getElementById('riverKrathongsLayer');
+                riverLayer.innerHTML = ''; // ล้างแคนวาสแม่น้ำเพื่อวาดใหม่แบบปัจจุบัน
+                riverKrathongs = [];
+
+                if (savedList.length === 0) {
+                    emptyHint.classList.remove('hidden');
+                    latestFollowerKrathong = null;
+                } else {
+                    emptyHint.classList.add('hidden');
+                    const reversed = [...savedList].reverse();
+                    latestFollowerKrathong = reversed[0];
+
+                    reversed.forEach((item, idx) => {
+                        const startX = (idx * 18 + Math.random() * 8) % 86;
+                        const laneY = 12 + (idx % 5) * 15 + Math.random() * 4;
+                        addKrathongToRiver(item, startX, laneY, idx === 0);
+                    });
+                }
+
+                renderRecentFollowersList([...savedList].reverse());
+            }, (error) => {
+                console.error("Firebase sync error: ", error);
+                showToast('ไม่สามารถเชื่อมต่อฐานข้อมูลออนไลน์ได้');
+            });
+        }
+
+        function renderRecentFollowersList(items) {
+            const listEl = document.getElementById('recentFollowersList');
+            if (!items || items.length === 0) {
+                listEl.innerHTML = `
+                    <div class="bg-white/80 border border-dashed border-amber-300 rounded-xl p-3 text-center">
+                        <p class="text-xs text-slate-600">
+                            ยังไม่มีกระทงในแม่น้ำ มาเป็นคนแรกที่ลอยกระทงกันเลย! 🪷
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+
+            listEl.innerHTML = items.slice(0, 15).map(item => {
+                const styleObj = KRATHONG_STYLES.find(s => s.id === item.type) || KRATHONG_STYLES[0];
+                return `
+                    <div onclick='inspectFollowerKrathong(${JSON.stringify(item).replace(/'/g, "&#39;")})'
+                         class="flex items-center justify-between gap-2 bg-white hover:bg-amber-50/90 px-3 py-2 rounded-xl border border-amber-200/90 shadow-2xs cursor-pointer transition">
+                        <div class="min-w-0 flex-1">
+                            <p class="text-xs text-slate-800 truncate">
+                                <span class="font-bold text-[#1B5E20]">${escapeHTML(item.name)}:</span>
+                                <span class="text-slate-600">${escapeHTML(item.wish)}</span>
+                            </p>
+                        </div>
+                        <div class="w-7 h-7 flex-shrink-0">
+                            ${styleObj.svg()}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function addKrathongToRiver(data, startPercentX, percentY, isNewHighlight = false) {
+            const layer = document.getElementById('riverKrathongsLayer');
+            const styleObj = KRATHONG_STYLES.find(s => s.id === data.type) || KRATHONG_STYLES[0];
+
+            const node = document.createElement('div');
+            node.className = 'krathong-item flex flex-col items-center';
+
+            const scale = 0.75 + (percentY / 100) * 0.4;
+            node.style.top = `${percentY}%`;
+            node.style.left = `${startPercentX}%`;
+            node.style.zIndex = Math.floor(percentY);
+
+            node.innerHTML = `
+                <div class="mb-0.5 px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold whitespace-nowrap shadow-md ${
+                    isNewHighlight
+                        ? 'bg-[#C6FF00] text-[#1B5E20] font-bold ring-2 ring-white'
+                        : 'bg-slate-950/80 text-amber-200 border border-[#FFD54F]/40'
+                }">
+                    ${escapeHTML(data.name)}
+                </div>
+                <div class="relative krathong-bob" style="width: ${Math.round(76 * scale)}px; height: ${Math.round(70 * scale)}px;">
+                    <div class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-full h-4 rounded-full bg-[#FFD54F]/30 blur-xs"></div>
+                    ${styleObj.svg()}
+                </div>
+            `;
+
+            node.addEventListener('click', () => inspectFollowerKrathong(data));
+            layer.appendChild(node);
+
+            riverKrathongs.push({
+                el: node,
+                x: startPercentX,
+                speed: (0.014 + Math.random() * 0.008) * scale
+            });
+        }
+
+        function animateRiverFlow() {
+            function frame() {
+                riverKrathongs.forEach(k => {
+                    k.x += k.speed;
+                    if (k.x > 104) k.x = -14;
+                    k.el.style.left = `${k.x}%`;
+                });
+                requestAnimationFrame(frame);
+            }
+            requestAnimationFrame(frame);
+        }
+
+        // ฟังก์ชันกดลอยกระทง บันทึกข้อมูลขึ้น Firebase Realtime Database
+        function launchKrathong() {
+            const nameInput = document.getElementById('visitorNameInput');
+            const wishInput = document.getElementById('visitorWishInput');
+
+            const nameVal = nameInput.value.trim() || 'แฟนเพจวาซาบิล้านนา';
+            const wishVal = wishInput.value.trim() || 'ขอให้มีความสุข สุขภาพแข็งแรง เงินทองไหลมาเทมาตลอดปีเจ้า!';
+
+            const newItem = {
+                id: 'kw_' + Date.now(),
+                name: nameVal,
+                wish: wishVal,
+                type: selectedStyleId
+            };
+
+            // บันทึกข้อมูลลง Firebase Realtime Database
+            dbRef.push(newItem).then(() => {
+                latestFollowerKrathong = newItem;
+                playReleaseChimeAndWater();
+                openShareCardModal();
+                showToast('ปล่อยกระทงลงแม่น้ำปิงเรียบร้อยแล้วเจ้า! 🪷');
+            }).catch((err) => {
+                console.error(err);
+                showToast('เกิดข้อผิดพลาดในการบันทึก กรุณาลองใหม่อีกครั้ง');
+            });
+        }
+
+        function openShareCardModal() {
+            const fallbackPreview = {
+                name: document.getElementById('visitorNameInput').value.trim() || 'แฟนเพจวาซาบิล้านนา',
+                wish: document.getElementById('visitorWishInput').value.trim() || 'ขอให้มีความสุข สุขภาพแข็งแรง เงินทองไหลมาเทมาตลอดปีเจ้า!',
+                type: selectedStyleId
+            };
+            const data = latestFollowerKrathong || fallbackPreview;
+            const styleObj = KRATHONG_STYLES.find(s => s.id === data.type) || KRATHONG_STYLES[0];
+
+            document.getElementById('modalKrathongPreview').innerHTML = styleObj.svg();
+            document.getElementById('modalCardName').textContent = data.name;
+            document.getElementById('modalCardWish').textContent = `"${data.wish}"`;
+
+            const modal = document.getElementById('shareCardModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeShareCardModal() {
+            const modal = document.getElementById('shareCardModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function copyBlessingToClipboard() {
+            const fallbackPreview = {
+                name: document.getElementById('visitorNameInput').value.trim() || 'แฟนเพจวาซาบิล้านนา',
+                wish: document.getElementById('visitorWishInput').value.trim() || 'ขอให้มีความสุข สุขภาพแข็งแรง เงินทองไหลมาเทมาตลอดปีเจ้า!'
+            };
+            const data = latestFollowerKrathong || fallbackPreview;
+            const copyText = `🪷 ลอยกระทงออนไลน์กับเพจ "วาซาบิญี่ปุ่นแท้ by Lanna Products"\n👤 ชื่อ: ${data.name}\n🙏 คำอธิษฐาน: "${data.wish}"\n#ลอยกระทงออนไลน์ #ยี่เป็งล้านนา #วาซาบิญี่ปุ่นแท้byLannaProducts`;
+
+            const textarea = document.createElement('textarea');
+            textarea.value = copyText;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showToast('คัดลอกข้อความแล้ว! นำไปวางคอมเมนต์ในเพจได้เลย');
+            } catch (e) {
+                showToast('กรุณาแคปหน้าจอการ์ดด้านบนเพื่อแชร์ลงคอมเมนต์ได้เลยครับ');
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function inspectFollowerKrathong(data) {
+            const styleObj = KRATHONG_STYLES.find(s => s.id === data.type) || KRATHONG_STYLES[0];
+            document.getElementById('inspectSvgBox').innerHTML = styleObj.svg();
+            document.getElementById('inspectFollowerName').textContent = data.name;
+            document.getElementById('inspectFollowerWish').textContent = `"${data.wish}"`;
+
+            const modal = document.getElementById('inspectKrathongModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeInspectModal() {
+            const modal = document.getElementById('inspectKrathongModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // ระบบล้างข้อมูลทั้งหมดใน Firebase
+        function openResetConfirmModal() {
+            const modal = document.getElementById('resetConfirmModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeResetConfirmModal() {
+            const modal = document.getElementById('resetConfirmModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function confirmResetKrathongs() {
+            dbRef.remove().then(() => {
+                closeResetConfirmModal();
+                showToast('ล้างข้อมูลและรีเซ็ตยอดกระทงเป็น 0 เรียบร้อยแล้วครับ');
+            }).catch((err) => {
+                console.error(err);
+                showToast('เกิดข้อผิดพลาดในการรีเซ็ตข้อมูล');
+            });
+        }
+
+        function showToast(message) {
+            const banner = document.getElementById('toastBanner');
+            document.getElementById('toastBannerText').textContent = message;
+            banner.classList.remove('hidden');
+            banner.classList.add('flex');
+            setTimeout(() => {
+                banner.classList.add('hidden');
+                banner.classList.remove('flex');
+            }, 3500);
+        }
+
+        function escapeHTML(str) {
+            return String(str).replace(/[&<>'"]/g, m => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                "'": '&#39;',
+                '"': '&quot;'
+            }[m]));
+        }
+    </script>
+</body>
+</html>
